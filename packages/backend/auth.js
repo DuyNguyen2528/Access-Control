@@ -1,14 +1,19 @@
-
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import userServices from './models/user-services.js'
+import  dotenv from "dotenv"
+dotenv.config()
 
 
 const creds = [];
 
-export function registerUser(req, res) {
-  const { username, pwd } = req.body; // from form
+export function registerUser(req, res, next) {
+  const username = req.body.username; // from form
+  const pwd = req.body.password  
 
   if (!username || !pwd) {
     res.status(400).send("Bad request: Invalid input data.");
-  } else if (creds.find((c) => c.username === username)) {
+  } else if (userServices.findOneAccount(username)) {
     res.status(409).send("Username already taken");
   } else {
     bcrypt
@@ -17,8 +22,12 @@ export function registerUser(req, res) {
       .then((hashedPassword) => {
         generateAccessToken(username).then((token) => {
           console.log("Token:", token);
-          res.status(201).send({ token: token });
-          creds.push({ username, hashedPassword });
+          
+          req.body.password = hashedPassword;
+          console.log(`req.body.password`, req.body.password)
+          //res.status(201).send({ token: token });
+            next();
+          
         });
       });
   }
@@ -26,6 +35,7 @@ export function registerUser(req, res) {
 
 
 function generateAccessToken(username) {
+    
   return new Promise((resolve, reject) => {
     jwt.sign(
       { username: username },
@@ -51,6 +61,7 @@ export function authenticateUser(req, res, next) {
     console.log("No token received");
     res.status(401).end();
   } else {
+    console.log("verifying...")
     jwt.verify(
       token,
       process.env.TOKEN_SECRET,

@@ -1,15 +1,21 @@
 import express from 'express'
 import cors from 'cors'
-import 'dotenv/config'
-import userServices from './models/user-services.js'
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
+
+import userServices from './models/user-services.js'
+
+import "./auth.js"
+import { authenticateUser, registerUser } from './auth.js';
+import  dotenv from "dotenv"
+dotenv.config()
 const app = express()
 const port = 8001
 
 app.use(cors())
 app.use(express.json())
+
+console.log(`process.env.SECRET_TOKEN`, process.env.TOKEN_SECRET)
+console.log(`process.env.MONGODB_URI`, process.env.MONGODB_URI)
 
 app.get('/', (req, res) => {
     res.send(`Hello World! ${process.env.MONGODB_URI}`)
@@ -49,7 +55,7 @@ app.get('/findusername', async (req, res) => {
     const username = req.query['username']
     try {
         const result = await userServices.findUserByName(username)
-        console.log('backend result is === ', result)
+        //console.log('backend result is === ', result)
         if (result) {
             res.status(200).send({ exits: true, message: 'account exist' })
         } else {
@@ -71,11 +77,12 @@ app.get('/users/:id', async (req, res) => {
 })
 
 //   ADD USER
-app.post('/adduser', async (req, res) => {
-    const user = req.body
-
-    const savedUser = await userServices.addUser(user)
+app.post('/signup', registerUser, async (req, res, next) => {
+    const savedUser = req.body
+   // console.log(`/signup `, savedUser)
+    userServices.addUser(savedUser);
     if (savedUser) res.status(201).send(savedUser)
+    
     else res.status(500).end()
 })
 
