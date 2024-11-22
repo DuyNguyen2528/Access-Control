@@ -2,6 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
 import userServices from './models/user-services.js'
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const app = express()
 const port = 8001
